@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <title>Tip of my tongue</title>
+    <style>
+      .title--custom {
+        text-align: center;
+        font-weight: bold;
+        font-size: 32pt;
+      }
+      .team--name {
+        text-align: center;
+        font-size: medium;
+        font-family: monospace;
+        margin-bottom: 2rem;
+      }
+      .intro {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .book {
+        width: 50vw;
+        display: flex;
+        flex-direction: row;
+        margin: 1rem auto;
+      }
+      .book-desc {
+        margin-left: 2rem;
+        display: flex;
+        flex-direction: column;
+      }
+      .book-desc h2 {
+        font-weight: bold;
+        font-size: 24pt;
+      }
+      .book-desc .author {
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="section">
+      <h1 class="title--custom">Tip of my tounge</h1>
+      <p class="team--name">A PowerPuff Team product (prototype)</p>
+      <p class="intro">
+        Write a few phrases or sentences about the book you desire, and we shall
+        find it for you!
+      </p>
+      <div class="container" style="width: 76vw">
+        <div class="field">
+          <div class="control" style="width: 100%">
+            <textarea
+              style="width: 100%"
+              class="textarea"
+              placeholder="Describe your story..."
+              id="prompt"
+            ></textarea>
+          </div>
+        </div>
+        <div class="field is-grouped" style="width: 100%">
+          <div class="control" style="width: 100%">
+            <button id="btn" class="button is-link" style="width: 100%">
+              Search!
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="books" style="width: 76vw"></section>
+    <script>
+      const generateBook = (title, author, summary, cover) => {
+        const main = document.createElement("div");
+        main.classList.add("book");
+
+        const img = document.createElement("img");
+        img.src = cover;
+        img.alt = `Cover of ${title}`;
+        main.appendChild(img);
+
+        const desc = document.createElement("div");
+        desc.classList.add("book-desc");
+        const titleEl = document.createElement("h2");
+        titleEl.innerText = title;
+        const summaryEl = document.createElement("div");
+        summaryEl.innerText = summary;
+        const authorEl = document.createElement("div");
+        authorEl.classList.add("author");
+        authorEl.innerText = author;
+
+        desc.appendChild(titleEl);
+        desc.appendChild(authorEl);
+        desc.appendChild(summaryEl);
+        main.appendChild(desc);
+        return main;
+      };
+      const getGoogleData = async (title) => {
+        const url = await fetch(
+          `https://www.googleapis.com/books/v1/volumes?q=${title}`
+        )
+          .then((x) => x.json())
+          .then((x) => x.items[0]?.volumeInfo || "");
+        return url;
+      };
+
+      document.querySelector("#btn").addEventListener("click", () => {
+        const prompt = document.querySelector("#prompt")?.value || "";
+        fetch(`http://localhost:8080/query=${encodeURIComponent(prompt)}`)
+          .then((x) => x?.json())
+          .then((x) => {
+            if (!x) return;
+            document.getElementById("books").innerHTML = "";
+            if (x.length > 0) {
+              x.reverse().forEach((book) => {
+                getGoogleData(book.book_name).then((gdata) =>
+                  document
+                    .getElementById("books")
+                    .appendChild(
+                      generateBook(
+                        book.book_name,
+                        gdata.authors?.join(", "),
+                        book.short_sums,
+                        gdata.imageLinks.thumbnail
+                      )
+                    )
+                );
+              });
+            }
+            console.log(x);
+          });
+      });
+      document
+        .getElementById("books")
+        .appendChild(
+          generateBook(
+            "The Dune",
+            "Author",
+            "It is a book",
+            "http://books.google.com/books/content?id=RxxwnkPHlfEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+          )
+        );
+      // <div class="book">
+      //   <img
+      //     src="http://books.google.com/books/content?id=RxxwnkPHlfEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+      //     alt="Cover of the book dune"
+      //   />
+      //   <div class="book-desc">
+      //     <h2>Book title</h2>
+      //     <p id="author">Author</p>
+      //     <p>Description</p>
+      //   </div>
+      // </div>
+    </script>
+  </body>
+</html>
