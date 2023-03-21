@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -7,9 +8,15 @@ import numpy as np
 import cohere
 from cohere.classify import Example
 
+def get_api_key(var):
+    key = os.environ.get(var)
+    if key is None:
+        raise ValueError("Environment variable not set")
+    return key
+
 print("loading file")
-# TODO edit file path
-file = '/Users/vincentkohm/COHERE/first500.csv'
+# TODO edit file path to the database
+file = 'PATH TO DATABASE'
 df = pd.read_csv(file)
 allBooks = pd.read_csv(file)
 df = df.iloc[:, 1:]
@@ -20,7 +27,7 @@ sum_list = summaries.to_list()
 #!pip install -U cohere pinecone-client datasets
 
 # Replace with your API key
-co = cohere.Client("s0nsxsc6JxfC6sRswzg4YtbTyocSs9Hq0F8MfxQ3")
+co = cohere.Client(get_api_key("COHEREAPI_KEY"))
 
 embeds = co.embed(
     texts=sum_list,
